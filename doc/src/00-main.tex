@@ -1,0 +1,65 @@
+\documentclass[openany, 12pt]{book}
+\input{preamble}
+\title{SystemD}
+\author{Idris}
+\date{June 2025}
+
+%chktex-file 1
+
+\begin{document}
+\tableofcontents
+
+\chapter{Background}
+
+Let
+\begin{align*}
+	U = \set{u_1, u_2, \dots, u_n}
+\end{align*}
+
+be the finite set of all systemd units in the system. Each element $u_i \in U$
+represents a unique systemd unit, such as a service, target, socket, or timer.
+
+We define dependency and ordering relationships as binary relations on $U
+	\times U$, which we will formalize in the following sections.
+
+\begin{definition}{unit states}{}
+	Let $S$ be the set of possible states of a unit:
+	\begin{align*}
+		S = \set{ \mathsf{inactive},\ \mathsf{activating},\ \mathsf{active},\ \mathsf{deactivating},\ \mathsf{failed}}
+	\end{align*}
+	Define a state function
+	\begin{align*}
+		a : U \to S
+	\end{align*}
+	which maps each unit to its current state.
+\end{definition}
+
+\begin{definition}{started predicate}{}
+	Let
+	\begin{align*}
+		\mathsf{started}(u) \iff a(u) \in \set{ \mathsf{activating},\ \mathsf{active},\ \mathsf{deactivating}}
+	\end{align*}
+	This captures units that are in the process of starting, running, or
+	stopping — i.e., **not inactive or failed**.
+\end{definition}
+
+\begin{definition}{wants predicate}{}
+	Given a relation
+	\begin{align*}
+		\text{Wants} \subseteq U \times U
+	\end{align*}
+	we define the systemd behavior as:
+
+	\begin{quote}
+		If $\mathsf{started}(a)$ becomes true, then for each $(a, b) \in
+			\text{Wants}$, systemd attempts $\mathsf{start}(b)$, regardless of
+		whether $\mathsf{start}(b)$ eventually succeeds or fails.
+	\end{quote}
+
+	This defines `Wants` as a rule over the state predicate $\mathsf{started}$,
+	rather than an abstract dependency graph.
+\end{definition}
+
+% \printbibliography{}
+% \printindex{}
+\end{document}
