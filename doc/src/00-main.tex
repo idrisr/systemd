@@ -8,8 +8,118 @@
 
 \begin{document}
 \tableofcontents
+\listoftodos
 
-\chapter{Background}
+\chapter{Unit Skeleton}
+\begin{alist}
+	\item all units have a Unit section
+	\item contain a description, reference to documentation and dependencies on
+	other unites
+\end{alist}
+
+\chapter{Ordering}
+
+Some of the relations form the dependency graph. Then for any node, we can
+create a closure over the set of dependent nodes. Then from that closure we can
+create a time ordering.
+
+\section{Unit Relations}
+
+\todo[inline]{Improve the order definitions using predicates over the states}
+\begin{definition}{Topological Order}{}
+	A topological order is a total ordering over a subset of units such that for
+	any
+	\begin{align*}
+		(a, b) \in R \subseteq U \times U,
+	\end{align*}
+	if $a$ must causally precede $b$ (e.g., via \texttt{Wants} or \texttt{Requires}),
+	then $a$ appears before $b$ in the ordering.
+
+	This applies when $R$ forms a directed acyclic graph (DAG), and is used to
+	compute valid execution sequences from dependency relations.
+\end{definition}
+
+\begin{definition}{Time Order}{}
+	A time order is a scheduling constraint over unit startup.
+
+	Given
+	\begin{align*}
+		(a, b) \in R \subseteq U \times U,
+	\end{align*}
+	the relation enforces that if both $a$ and $b$ are scheduled to start, then
+	$\mathsf{start}(a)$ is delayed until $\mathsf{start}(b)$ has finished
+	(successfully or not).
+
+	Time order does not imply dependency; it only constrains relative ordering.
+\end{definition}
+
+\begin{definition}{Lifetime Binding}{}
+	A lifetime binding is a coupling between the runtime lifecycles of units.
+
+	Given
+	\begin{align*}
+		(a, b) \in R \subseteq U \times U,
+	\end{align*}
+	the relation enforces that events in the lifetime of $b$ (e.g., stopping,
+	restarting) propagate to $a$.
+
+	Examples include \texttt{BindsTo} (stop cascades) and \texttt{PartOf}
+	(restart cascades).
+\end{definition}
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{lccc l}
+		\toprule
+		\textbf{Relation} & \textbf{Topo.} & \textbf{Time} & \textbf{Bind / Reverse} & \textbf{Note}            \\
+		\midrule
+		Wants             & \checkmark     &               &                         & Soft dependency          \\
+		Requires          & \checkmark     &               &                         & Hard dependency (fatal)  \\
+		Requisite         & \checkmark     &               &                         & Must succeed pre-start   \\
+		Conflicts         & \checkmark     &               &                         & Mutual exclusion         \\
+		After             &                & \checkmark    &                         & Starts after if present  \\
+		Before            &                & \checkmark    &                         & Starts before if present \\
+		BindsTo           &                &               & \checkmark              & Stop cascades            \\
+		PartOf            &                &               & \checkmark              & Restart/stop cascades    \\
+		JoinsNamespaceOf  &                &               & \checkmark              & Shares runtime namespace \\
+		RequiredBy        &                &               & $\leftarrow$            & Reverse dependency       \\
+		\bottomrule
+	\end{tabular}
+	\caption{Systemd relations classified by axis with compact notes}
+\end{table}
+
+
+Let $U$ be the finite set of all systemd units.
+
+We define three fundamental binary relations on $U \times U$:
+
+\begin{align*}
+	\text{Wants}   & \subseteq U \times U &  & \text{(Dependency)}        \\
+	\text{After}   & \subseteq U \times U &  & \text{(Time Ordering)}     \\
+	\text{BindsTo} & \subseteq U \times U &  & \text{(Lifecycle Binding)}
+\end{align*}
+
+\begin{description}
+	\item[Wants:] If $(a, b) \in \text{Wants}$, then starting $a$ causes systemd
+	      to attempt to start $b$. No ordering is implied.
+
+	\item[After:] If $(a, b) \in \text{After}$, and both $a$ and $b$ are being
+	      started, then systemd delays starting $a$ until after $b$ has finished
+	      starting (success or failure).
+
+	\item[BindsTo:] If $(a, b) \in \text{BindsTo}$, then stopping $b$ causes
+	      systemd to stop $a$. The lifecycle of $a$ is bound to that of $b$.
+\end{description}
+
+
+\chapter{Relations}
+\begin{enumerate}[label = {(\arabic*)}]
+	\item Wants
+	\item Requires
+	\item Before
+	\item After
+	\item Conflicts
+\end{enumerate}
 
 Let
 \begin{align*}
@@ -21,6 +131,10 @@ represents a unique systemd unit, such as a service, target, socket, or timer.
 
 We define dependency and ordering relationships as binary relations on $U
 	\times U$, which we will formalize in the following sections.
+
+\begin{definition}{Activation Queue}{}
+
+\end{definition}
 
 \begin{definition}{unit states}{}
 	Let $S$ be the set of possible states of a unit:
@@ -43,6 +157,7 @@ We define dependency and ordering relationships as binary relations on $U
 	stopping — i.e., **not inactive or failed**.
 \end{definition}
 
+\section{Wants}
 \begin{definition}{wants predicate}{}
 	Given a relation
 	\begin{align*}
@@ -56,9 +171,287 @@ We define dependency and ordering relationships as binary relations on $U
 		whether $\mathsf{start}(b)$ eventually succeeds or fails.
 	\end{quote}
 
-	This defines `Wants` as a rule over the state predicate $\mathsf{started}$,
+	This defines ``Wants'' as a rule over the state predicate $\mathsf{started}$,
 	rather than an abstract dependency graph.
+
+	A weaker form of Requires: unit is started if any in the list fail.
 \end{definition}
+
+\section{WantedBy}
+\begin{definition}{wantedby predicate}{}
+	Given the same relation
+	\begin{align*}
+		\text{Wants} \subseteq U \times U
+	\end{align*}
+	we define
+	\begin{align*}
+		\text{WantedBy}(b) := \{ a \in U \mid (a, b) \in \text{Wants} \}
+	\end{align*}
+	as the *reverse mapping* of the ``Wants'' relation. In unit files, specifying
+	\texttt{WantedBy=target} means that \texttt{(target, unit)} is added to the
+	``Wants'' relation.
+
+	This declaration is used to construct the dependency graph at install time,
+	via \texttt{systemctl enable}.
+
+	Mostly used for targets.
+\end{definition}
+
+\section{Requires}
+\begin{definition}{requires predicate}{}
+	list of units this unit depends on which must be started as well.
+\end{definition}
+
+\section{Conflicts}
+\begin{definition}{conflicts predicate}{}
+	list of units this unit depends on which must be started as well.
+\end{definition}
+
+\section{After}
+\begin{definition}{after predicate}{}
+	Given a relation
+	\begin{align*}
+		\text{After} \subseteq U \times U
+	\end{align*}
+	we define the systemd behavior as:
+
+	\begin{quote}
+		If $(a, b) \in \text{After}$, then systemd ensures that if both $a$ and
+		$b$ are scheduled to start, then $\mathsf{start}(b)$ completes
+		(successfully or not) before $\mathsf{start}(a)$ begins.
+	\end{quote}
+
+	This relation governs start-time ordering but imposes no dependency: systemd
+	does not automatically start $b$ when starting $a$.
+
+	Thus, ``After'' is a partial order constraint on the timeline of unit
+	startups, orthogonal to dependency relations like ``Wants''.
+\end{definition}
+
+
+
+\chapter{Units}
+\section{Service}
+Service units are the work-horse of systemd. Only within service units, we have
+a type argument.
+
+\begin{definition}{Templated Units}{}
+	Templated units in \texttt{systemd} are unit files whose names contain an
+	\texttt{@} symbol, such as \texttt{myservice@\{instance\}.service}. They define
+	a generic structure that can be instantiated with specific identifiers. When an
+	instance like \texttt{myservice@foo.service} is started, the placeholder is
+	replaced with \texttt{foo}, and the unit can refer to this instance string using
+	\texttt{\%i} (or \texttt{\%I} for the unescaped form). This enables modular,
+	reusable configurations across services or users.
+\end{definition}
+
+\begin{intuition}{Templated Unit}{}
+	A templated unit is essentially a $\lambda$-abstraction over a systemd unit
+	file. Applying it with an instance name produces a concrete unit named
+	\texttt{unit@\textit{instance}.service}, where \textit{instance} is the
+	argument.
+\end{intuition}
+
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{@{}ll@{}}
+		\toprule
+		\textbf{Type}    & \textbf{Meaning}                                             \\ \midrule
+		\texttt{simple}  & Default. Start service and assume it's ready immediately.    \\
+		\texttt{exec}    & Like \texttt{simple}, but tracks the real PID of the binary. \\
+		\texttt{forking} & Assumes service forks; parent exits when setup is done.      \\
+		\texttt{oneshot} & For short-lived commands (e.g. setup); blocks until done.    \\
+		\texttt{notify}  & Waits for \texttt{READY=1} via \texttt{sd\_notify()}.        \\
+		\texttt{dbus}    & Waits until service acquires a specific D-Bus name.          \\
+		\bottomrule
+	\end{tabular}
+	\caption{Valid \texttt{Type=} values for \texttt{.service} units}
+\end{table}
+
+Use notify when you want to control when the unit is considered started based on
+your custom logic.
+
+\section{Socket}
+
+\section{Timer}
+
+\section{Target}
+\begin{definition}{Target}{}
+	Targets are grouping units in systemd. They have no associated process;
+	their only role is to aggregate other units for synchronization and
+	dependency management.
+\end{definition}
+
+A target is considered active when all of its Requires= or Wants= are started
+in the systemd sense---activating, active, or deactivating.
+
+It doesn’t run code. It doesn't have a process. It just becomes active as soon
+as the units it gathers are active.
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{ll}
+		\toprule
+		\textbf{Target} & \textbf{Description}                              \\
+		\midrule
+		default         & Boot entry point; usually links to another target \\
+		multi-user      & Non-graphical multi-user system (like runlevel 3) \\
+		graphical       & Multi-user + graphical session (like runlevel 5)  \\
+		rescue          & Single-user mode with essential services          \\
+		emergency       & Minimal shell with almost nothing started         \\
+		sysinit         & Early boot: mounts, udev, swap, tmpfiles          \\
+		basic           & After sysinit; sockets, timers, dbus, etc.        \\
+		network-online  & Network stack is fully configured                 \\
+		shutdown        & Synchronization point during shutdown             \\
+		\bottomrule
+	\end{tabular}
+	\caption{Key systemd targets and their purposes}
+\end{table}
+
+\begin{center}
+	\begin{tabular}{lc}
+		\toprule
+		type      & resource control \\
+		\midrule
+		automount &                  \\
+		device    &                  \\
+		mount     &                  \\
+		path      &                  \\
+		scope     & \checkmark       \\
+		service   & \checkmark       \\
+		slice     & \checkmark       \\
+		snapshot  &                  \\
+		socket    &                  \\
+		swap      &                  \\
+		target    &                  \\
+		timer     &                  \\
+		\bottomrule
+	\end{tabular}
+\end{center}
+
+\chapter{Targets}
+
+\begin{definition}{target}{}
+	\begin{alist}
+		\item unit that lists dependencies on other targets
+	\end{alist}
+\end{definition}
+
+\begin{tabular}{@{}ll@{}}
+	\toprule
+	\textbf{Target}                & \textbf{Purpose}                                                 \\
+	\midrule
+	\texttt{default.target}        & Main entry point after boot (usually symlinks to another target) \\
+	\texttt{multi-user.target}     & Non-graphical system, networking, users, services                \\
+	\texttt{graphical.target}      & Like multi-user + graphical session (e.g. display manager)       \\
+	\texttt{network.target}        & Basic network stack is up (may be too early for apps)            \\
+	\texttt{network-online.target} & Network is fully configured (for apps needing connectivity)      \\
+	\texttt{sysinit.target}        & Early boot initialization (mounts, swap, etc.)                   \\
+	\texttt{basic.target}          & After sysinit; before most services                              \\
+	\texttt{rescue.target}         & Single-user mode with minimal services                           \\
+	\texttt{emergency.target}      & Minimal shell, no services (critical recovery)                   \\
+	\bottomrule
+\end{tabular}
+
+
+\chapter{Service Config}
+
+\begin{definition}{Service Section}{}
+	Let $u \in U$ be a systemd unit of type \texttt{.service}.
+
+	The \texttt{[Service]} section defines the **execution behavior** of $u$:
+	a finite map
+	\begin{align*}
+		\text{Service} : K \to V
+	\end{align*}
+	where $K$ is a set of predefined keys (e.g. \texttt{ExecStart}, \texttt{Restart}),
+	and $V$ are values interpreted by systemd at runtime.
+
+	This section governs the transition behavior of the unit’s state predicate $\mathsf{started}(u)$,
+	including:
+	\begin{itemize}
+		\item when and how the unit is started
+		\item what process it runs
+		\item what happens on failure
+	\end{itemize}
+\end{definition}
+
+\chapter{Sandbox}
+
+\begin{tabular}{ll}
+	\toprule
+	\textbf{Option}                & \textbf{Description}                                                                            \\
+	\midrule
+	\texttt{CapabilityBoundingSet} & Limits kernel capabilities available to the service.                                            \\
+	\texttt{DynamicUser}           & a transient user at runtime, Removed when the service stops.                                    \\
+	\texttt{InaccessiblePaths}     & Makes specific paths inaccessible.                                                              \\
+	\texttt{PrivateDevices}        & Restricts access to physical devices.                                                           \\
+	\texttt{PrivateNetwork}        & Isolates in private network namespace.                                                          \\
+	\texttt{PrivateTmp}            & Isolates \texttt{/tmp} and \texttt{/var/tmp} for the service.                                   \\
+	\texttt{PrivateUsers}          & Hides the system’s user table from the service.                                                 \\
+	\texttt{ProtectControlGroups}  & Prevents manipulating cgroups from inside the service.                                          \\
+	\texttt{ProtectHome}           & Restricts access to user home directories.                                                      \\
+	\texttt{ProtectKernelTunables} & Prevents modifying kernel tunables in \texttt{/proc/sys} and similar.                           \\
+	\texttt{ProtectSystem}         & Makes parts of the file system read-only. Values: \texttt{yes}, \texttt{full}, \texttt{strict}. \\
+	\texttt{ReadOnlyPaths}         & Makes specific paths read-only.                                                                 \\
+	\texttt{RootDirectory}         & Changes the root directory for the service (like \texttt{chroot}).                              \\
+	\texttt{User}                  & Runs service as specified (existing) user.                                                      \\
+	\bottomrule
+\end{tabular}
+
+
+\chapter{Design Patterns}
+
+\section{If This Then That}
+Many systemd units follow an *if-then* structure, where the *then* is a
+\texttt{.service} unit, and the *if* is an event unit. Common event types include
+\texttt{.path} (file changes), \texttt{.mount} (mount state changes),
+\texttt{.socket} (socket activation), \texttt{.timer} (scheduled time),
+and \texttt{.device} (hardware changes). These trigger the corresponding
+service via the \texttt{Unit=} directive.
+
+\section{After plus Wants}
+The ``wants'' relation
+
+\chapter{Files}
+\begin{table}[h]
+	\centering
+	\begin{tabular}{@{}lll@{}}
+		\toprule
+		\textbf{Description}          & \textbf{Path}                                            & \textbf{Scope} \\ \midrule
+		Admin overrides (persistent)  & \texttt{/etc/systemd/system/}                            & System         \\
+		Runtime overrides (temporary) & \texttt{/run/systemd/system/}                            & System         \\
+		Package default units         & \texttt{/lib/systemd/system/} or \texttt{/nix/store/...} & System         \\
+		User config overrides         & \texttt{\$XDG\_CONFIG\_HOME/systemd/user/}               & User           \\
+		User runtime units            & \texttt{\$XDG\_RUNTIME\_DIR/systemd/user/}               & User           \\
+		User package units            & \texttt{\$XDG\_DATA\_DIRS/systemd/user/}                 & User           \\
+		\bottomrule
+	\end{tabular}
+	\caption{systemd unit file lookup hierarchy}
+\end{table}
+
+
+\chapter{Systemd Components}
+
+\begin{tabular}{lll}
+	\toprule
+	\textbf{Component} & \textbf{Unit File}                      & \textbf{Type}     \\
+	\midrule
+	systemd (PID 1)    & N/A                                     & Special           \\
+	systemd-journald   & \texttt{systemd-journald.service}       & \texttt{.service} \\
+	systemd-logind     & \texttt{systemd-logind.service}         & \texttt{.service} \\
+	systemd-udevd      & \texttt{systemd-udevd.service}          & \texttt{.service} \\
+	systemd-networkd   & \texttt{systemd-networkd.service}       & \texttt{.service} \\
+	systemd-resolved   & \texttt{systemd-resolved.service}       & \texttt{.service} \\
+	systemd-timesyncd  & \texttt{systemd-timesyncd.service}      & \texttt{.service} \\
+	systemd-homed      & \texttt{systemd-homed.service}          & \texttt{.service} \\
+	systemd-tmpfiles   & \texttt{systemd-tmpfiles-setup.service} & \texttt{.service} \\
+	systemctl (CLI)    & N/A                                     & Binary            \\
+	\bottomrule
+\end{tabular}
+
+\chapter{Overrides}
 
 % \printbibliography{}
 % \printindex{}
