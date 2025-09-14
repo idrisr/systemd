@@ -15,6 +15,36 @@
 \tableofcontents
 % \listoftodos
 
+\frontmatter
+\chapter{Introduction}
+SystemD is a huge, unavoidable beast on linux and nixos. This is my attempt to
+teach it to myself and build an artifact along the way.
+
+SystemD is a graph of units.  Every process has a parent, with the one
+exception being PID 1.  SystemD is PID 1, launched by the kernel and the entry
+to user space.
+
+SystemD manages a directed graph of processes.  Then the question becomes, how
+is the graph built, and how is the graph managed?
+
+The nodes of the graphs are called units.  Units are specified by building unit
+files, and then putting them in certain known directories.  SystemD then scans
+all those directories for valid unit files, and then builds a graph.
+
+To execute the graph, systemd starts launching processes, in certain
+chronological and topological order, such that dependencies are handled while
+also taking advantage of speed-ups available via parallel execution.
+
+Processes along the way might die, and then systemd is also responsible for
+resuscitating them.  Systemd has as way to launch via processes from kernel
+events, like socket activation, device appearance, path changes, etc.
+
+The process graph built by systemd contains lots of daemons listening on network
+and unix sockets. Systemd doesn't provide a discovery mechanism for those
+available services, and that is the purview of DNS for network sockets and dbus
+for unix sockets.
+
+\mainmatter
 \chapter{Units}
 \section{Service}
 Service units are the work-horse of systemd. Only within service units, we have
