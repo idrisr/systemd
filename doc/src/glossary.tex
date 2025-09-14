@@ -1,56 +1,50 @@
-\newglossaryentry{mesa} {
-	name=mesa,
-	description={Collection of userspace GPU drivers that implement APIs like OpenGL, Vulkan, and OpenCL, translating them into GPU commands on Linux}
+\newglossaryentry{template unit}{
+  name=template unit,
+  description={
+      A systemd unit file that defines a generic service or target using a
+      parameterized name. Template unit files end in \texttt{@.service} (or other
+      unit type suffixes) and are instantiated by supplying an instance name,
+      e.g., \texttt{myservice@foo.service}. Inside the template, the instance name
+      can be referenced using specifiers such as \texttt{\%i}. This mechanism
+      supports scalable patterns such as one unit per user, device, or interface
+    }
 }
 
-
-\newglossaryentry{KMS} {
-	name=kms,
-	description={Kernel Mode Setting is the Linux kernel subsystem responsible
-			for setting display resolution, refresh rate, and managing video
-			outputs. It enumerates your displays and sets properties such as their
-			selected resolution, also known as their ``mode''
-		}
+\newglossaryentry{unit-section}{
+  name=unit section,
+  description={
+      A logical partition within a systemd unit file. Unit files follow an
+      INI-style format, where sections are enclosed in square brackets such
+      as \texttt{[Unit]}, \texttt{[Service]}, or \texttt{[Install]}. Each
+      section groups together related configuration directives. Some
+      sections are common to all units (e.g., \texttt{[Unit]},
+      \texttt{[Install]}), while others are specific to the unit type (e.g.,
+      \texttt{[Service]} for \texttt{.service} units, \texttt{[Timer]} for
+      \texttt{.timer} units). Systemd parses these sections to build the
+      dependency graph and execution behavior of the unit
+    }
 }
 
-\newglossaryentry{DRM} {
-	name=drm,
-	description={Direct Rendering Manager is the Linux kernel subsystem that
-			manages GPU access, buffer objects, and rendering synchronization. It
-			efficiently tasks the GPU with work from userspace
-		}
+\newglossaryentry{target-unit}{
+  name=target unit,
+  description={
+      A special kind of systemd unit (with suffix \texttt{.target}) that
+      groups other units together. Targets do not start processes themselves;
+      instead, they serve as synchronization points and activation milestones
+      in the boot or user session. Examples include \texttt{multi-user.target},
+      \texttt{graphical.target}, and \texttt{default.target}. They are often
+      used as \texttt{WantedBy=} or \texttt{RequiredBy=} anchors in other unit
+      files.
+    }
 }
 
-\newglossaryentry{EGL} {
-	name=EGL,
-	description={
-			Interface between rendering APIs (like OpenGL or OpenGL ES) and the
-			native platform windowing system, used to create GPU contexts and
-			manage rendering surfaces
-		}
-}
-
-
-\newglossaryentry{GBM} {
-	name=gbm,
-	description={Generic Buffer Management is a userspace library that lets
-			applications allocate GPU buffers for rendering without a window system}
-}
-
-\newglossaryentry{libdrm} {
-	name=libdrm,
-	description={userspace library that wraps DRM ioctls, providing
-			Mesa and other clients safe access to the kernel’s graphics APIs}
-}
-
-\newglossaryentry{libinput} {
-	name=libinput,
-	description={library that handles input device events like
-			touchpads, keyboards, and mice in a compositor-friendly, unified way}
-}
-
-\newglossaryentry{evdev} {
-	name=evdev,
-	description={(event device) is a Linux kernel interface that exposes
-			input devices as event streams under \texttt{/dev/input/}}
+\newglossaryentry{activation-queue}{
+  name=activation queue,
+  description={
+      The ordered set of jobs that systemd creates when resolving a unit
+      start, stop, or isolate request. The activation queue is built from the
+      dependency graph, with ordering constraints (\texttt{Before=},
+      \texttt{After=}) applied. It represents the sequence of unit state
+      changes that systemd will dispatch to reach the requested target state
+    }
 }
