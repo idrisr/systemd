@@ -2,6 +2,7 @@
 let
   mytex = pkgs.texlive.combine {
     inherit (pkgs.texlive)
+      adjustbox
       biblatex
       enumitem
       glossaries
@@ -12,6 +13,7 @@ let
       rsfs cm-super
       scheme-small
       tcolorbox
+      tikz-cd
       tikzfill
       titlesec
       todonotes

@@ -9,7 +9,7 @@
       in
       {
         packages = {
-          default = pkgs.callPackage ./doc { };
+          doc = pkgs.callPackage ./doc { };
         };
       });
 }
