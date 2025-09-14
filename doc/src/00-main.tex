@@ -17,32 +17,27 @@
 
 \frontmatter
 \chapter{Introduction}
-SystemD is a huge, unavoidable beast on linux and nixos. This is my attempt to
-teach it to myself and build an artifact along the way.
+Systemd is the unavoidable beast on Linux and NixOS. This is my attempt to
+teach it to myself while producing a lasting artifact.
 
-SystemD is a graph of units.  Every process has a parent, with the one
-exception being PID 1.  SystemD is PID 1, launched by the kernel and the entry
-to user space.
+Systemd is PID~1, launched by the kernel and marking the entry to user space.
+It manages a directed graph of \emph{units}, not just processes. Every process
+has a parent, with systemd at the root of the user-space tree.
 
-SystemD manages a directed graph of processes.  Then the question becomes, how
-is the graph built, and how is the graph managed?
+The nodes of this graph are units. Units are defined by unit files, collected
+from known directories. Systemd parses them into a graph and executes it in
+topological order, honoring dependencies while maximizing parallelism.
 
-The nodes of the graphs are called units.  Units are specified by building unit
-files, and then putting them in certain known directories.  SystemD then scans
-all those directories for valid unit files, and then builds a graph.
+Some units spawn long-lived daemons, others represent timers, sockets, mounts,
+targets, or devices. Systemd supervises them: processes may crash, and systemd
+can restart them according to policy. It can also trigger units on events such
+as socket activity, device appearance, path changes, timers, or D-Bus requests.
 
-To execute the graph, systemd starts launching processes, in certain
-chronological and topological order, such that dependencies are handled while
-also taking advantage of speed-ups available via parallel execution.
+The process graph built by systemd contains many daemons listening on network
+or Unix sockets. Systemd itself does not provide a discovery layer for these
+services; DNS handles the network side, while D-Bus acts as the local discovery
+and IPC bus.
 
-Processes along the way might die, and then systemd is also responsible for
-resuscitating them.  Systemd has as way to launch via processes from kernel
-events, like socket activation, device appearance, path changes, etc.
-
-The process graph built by systemd contains lots of daemons listening on network
-and unix sockets. Systemd doesn't provide a discovery mechanism for those
-available services, and that is the purview of DNS for network sockets and dbus
-for unix sockets.
 
 \mainmatter
 \chapter{Units}
