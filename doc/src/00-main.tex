@@ -13,6 +13,7 @@
 
 \begin{document}
 \tableofcontents
+\listoftables
 % \listoftodos
 
 \frontmatter
@@ -83,10 +84,6 @@ a type argument.
 Use notify when you want to control when the unit is considered started based on
 your custom logic.
 
-\section{Socket}
-
-\section{Timer}
-
 \section{Target}
 \begin{definition}{Target}{}
   Targets are grouping units in systemd. They have no associated process;
@@ -120,41 +117,44 @@ scope
     \toprule
     \textbf{Target} & \textbf{Description}                              \\
     \midrule
-    default         & Boot entry point; usually links to another target \\
-    multi-user      & Non-graphical multi-user system (like runlevel 3) \\
-    graphical       & Multi-user + graphical session (like runlevel 5)  \\
-    rescue          & Single-user mode with essential services          \\
-    emergency       & Minimal shell with almost nothing started         \\
-    sysinit         & Early boot: mounts, udev, swap, tmpfiles          \\
     basic           & After sysinit; sockets, timers, dbus, etc.        \\
+    default         & Boot entry point; usually links to another target \\
+    emergency       & Minimal shell with almost nothing started         \\
+    graphical       & Multi-user + graphical session (like runlevel 5)  \\
+    multi-user      & Non-graphical multi-user system (like runlevel 3) \\
     network-online  & Network stack is fully configured                 \\
+    rescue          & Single-user mode with essential services          \\
     shutdown        & Synchronization point during shutdown             \\
+    sysinit         & Early boot: mounts, udev, swap, tmpfiles          \\
     \bottomrule
   \end{tabular}
   \caption{Key systemd targets and their purposes}
 \end{table}
 
-\begin{center}
-  \rowcolors{2}{gray!10}{white}
-  \begin{tabular}{lc}
-    \toprule
-    type      & resource control \\
-    \midrule
-    automount &                  \\
-    device    &                  \\
-    mount     &                  \\
-    path      &                  \\
-    scope     & \checkmark       \\
-    service   & \checkmark       \\
-    slice     & \checkmark       \\
-    snapshot  &                  \\
-    socket    &                  \\
-    swap      &                  \\
-    target    &                  \\
-    timer     &                  \\
-    \bottomrule
-  \end{tabular}
-\end{center}
+\begin{table}[h]
+  \begin{center}
+    \rowcolors{2}{gray!10}{white}
+    \begin{tabular}{lc}
+      \toprule
+      type      & resource control \\
+      \midrule
+      automount &                  \\
+      device    &                  \\
+      mount     &                  \\
+      path      &                  \\
+      scope     & \checkmark       \\
+      service   & \checkmark       \\
+      slice     & \checkmark       \\
+      snapshot  &                  \\
+      socket    &                  \\
+      swap      &                  \\
+      target    &                  \\
+      timer     &                  \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Resource control (CPU, memory, I/O limits) units.}
+\end{table}
 
 \chapter{Unit Sections}
 Every unit file is made up of sections. Different unit types will have different
@@ -165,113 +165,83 @@ Each section is made up of different directives, which are key-value pair which
 control how to the unit behaves. There are a ton of directives and sections, and
 the tables below summarize the most common types of each you should know.
 
-\begin{center}
-  % \rowcolors{2}{gray!10}{white}
-  \begin{tabular}{ll}
-    \toprule
-    \textbf{Section} & \textbf{Purpose / Key Directives}                                                                      \\
-    \midrule
-    \texttt{Unit}    & Metadata + dependencies. \texttt{Description=}, \texttt{Wants=}, \texttt{Requires=}, \texttt{After=}   \\
-    \texttt{Install} & Enable/disable integration. \texttt{WantedBy=}, \texttt{RequiredBy=}                                   \\
-    \texttt{Service} & Manage daemons / processes. \texttt{ExecStart=}, \texttt{ExecStop=}, \texttt{Restart=}, \texttt{User=} \\
-    \texttt{Socket}  & Socket activation. \texttt{ListenStream=}, \texttt{ListenDatagram=}, \texttt{SocketMode=}              \\
-    \texttt{Timer}   & Scheduling. \texttt{OnCalendar=}, \texttt{OnBootSec=}, \texttt{OnUnitActiveSec=}                       \\
-    \bottomrule
-  \end{tabular}
-\end{center}
 
-\begin{center}
-  % \rowcolors{2}{gray!10}{white}
-  \begin{tabular}{lll}
-    \toprule
-    \textbf{Section} & \textbf{Directive} & \textbf{Purpose}                         \\
-    \midrule
-    \textbf{Unit}
-                     & Description        & Human-readable label                     \\
-                     & Wants/Requires     & Declare weak/strong dependencies         \\
-                     & After/Before       & Control ordering of start/stop           \\
-    \midrule
-    \textbf{Service}
-                     & ExecStart          & Command to start the service             \\
-                     & ExecStop           & Command to stop the service              \\
-                     & Restart            & Restart policy                           \\
-                     & User               & User account to run as                   \\
-    \midrule
-    \textbf{Install}
-                     & WantedBy           & Targets the unit hooks into when enabled \\
-    \midrule
-    \textbf{Socket}
-                     & ListenStream       & TCP/Unix socket to listen on             \\
-                     & SocketMode         & File mode for the socket                 \\
-    \midrule
-    \textbf{Timer}
-                     & OnCalendar         & Cron-like schedule                       \\
-                     & OnBootSec          & Delay relative to boot                   \\
-    \bottomrule
-  \end{tabular}
-\end{center}
 
-\begin{center}
-  % \rowcolors{2}{gray!10}{white}
-  \begin{tabular}{ll}
-    \toprule
-    \textbf{Directive}  & \textbf{Purpose}                                        \\
-    \midrule
-    \multicolumn{2}{l}{\textbf{Core (80/20)}}                                     \\
-    Description         & Human-readable label for the unit                       \\
-    Wants/Requires      & Declare weak/strong dependencies                        \\
-    After               & Ensure ordering of start/stop                           \\
-    ExecStart           & Command to start the service                            \\
-    ExecStop            & Command to stop the service                             \\
-    Restart             & Restart policy (e.g., on-failure)                       \\
-    User                & User account to run as                                  \\
-    WorkingDirectory    & Working directory for the process                       \\
-    WantedBy            & Targets this unit hooks into when enabled               \\
-    ListenStream        & TCP/Unix stream socket to listen on                     \\
-    SocketMode          & File mode (permissions) for the socket                  \\
-    OnCalendar          & Cron-like time specification                            \\
-    OnBootSec           & Delay relative to boot                                  \\
-    OnUnitActiveSec     & Delay relative to last activation                       \\
-    \midrule
-    \multicolumn{2}{l}{\textbf{Advanced (sometimes needed)}}                      \\
-    Type                & Service startup type (simple, forking, notify, oneshot) \\
-    ExecReload          & Command to reload the service configuration             \\
-    Environment         & Define environment variables for the service            \\
-    EnvironmentFile     & Load environment variables from a file                  \\
-    RemainAfterExit     & Keep service marked active after process exits          \\
-    PIDFile             & Path to PID file for tracking service processes         \\
-    TimeoutStartSec     & Max time to wait for start before failure               \\
-    TimeoutStopSec      & Max time to wait for stop before kill                   \\
-    ConditionPathExists & Only start if a given path exists                       \\
-    Conflicts           & Ensure this unit and another cannot run simultaneously  \\
-    Alias               & Alternative names for this unit when enabled            \\
-    Also                & Enable/disable additional units together                \\
-    \bottomrule
-  \end{tabular}
-\end{center}
+\begin{table}
+  \begin{center}
+    % \rowcolors{2}{gray!10}{white}
+    \begin{tabular}{lll}
+      \toprule
+      \textbf{Section} & \textbf{Directive} & \textbf{Purpose}                         \\
+      \midrule
+      \textbf{Unit}
+                       & Description        & Human-readable label                     \\
+                       & Wants/Requires     & Declare weak/strong dependencies         \\
+                       & After/Before       & Control ordering of start/stop           \\
+      \midrule
+      \textbf{Service}
+                       & ExecStart          & Command to start the service             \\
+                       & ExecStop           & Command to stop the service              \\
+                       & Restart            & Restart policy                           \\
+                       & User               & User account to run as                   \\
+      \midrule
+      \textbf{Install}
+                       & WantedBy           & Targets the unit hooks into when enabled \\
+      \midrule
+      \textbf{Socket}
+                       & ListenStream       & TCP/Unix socket to listen on             \\
+                       & SocketMode         & File mode for the socket                 \\
+      \midrule
+      \textbf{Timer}
+                       & OnCalendar         & Cron-like schedule                       \\
+                       & OnBootSec          & Delay relative to boot                   \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Common Unit Sections}
+\end{table}
 
-% \rowcolors{2}{gray!10}{white}
-\begin{tabular}{lll}
-  \toprule
-  \textbf{Forward}     & \textbf{Reverse}     & \textbf{Where used}          \\
-  \midrule
-  Before               & After                & Unit                         \\
-  After                & Before               & Unit                         \\
-  Requires             & RequiredBy           & Unit / Install               \\
-  Wants                & WantedBy             & Unit / Install               \\
-  Upholds              & UpheldBy             & Unit / Install               \\
-  PartOf               & ConsistsOf           & Unit / automatic property    \\
-  BindsTo              & BoundBy              & Unit / automatic property    \\
-  Requisite            & RequisiteOf          & Unit / automatic property    \\
-  Conflicts            & ConflictedBy         & Unit / automatic property    \\
-  Triggers             & TriggeredBy          & Automatic properties         \\
-  PropagatesReloadTo   & ReloadPropagatedFrom & Unit                         \\
-  ReloadPropagatedFrom & PropagatesReloadTo   & Unit                         \\
-  PropagatesStopTo     & StopPropagatedFrom   & Unit                         \\
-  StopPropagatedFrom   & PropagatesStopTo     & Unit                         \\
-  Following            & n/a                  & Automatic property (devices) \\
-  \bottomrule
-\end{tabular}
+\begin{table}
+  \begin{center}
+    \rowcolors{2}{gray!10}{white}
+    \begin{tabular}{ll}
+      \toprule
+      \textbf{Directive}  & \textbf{Purpose}                                        \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Core (80/20)}}                                     \\
+      Description         & Human-readable label for the unit                       \\
+      Wants/Requires      & Declare weak/strong dependencies                        \\
+      After               & Ensure ordering of start/stop                           \\
+      ExecStart           & Command to start the service                            \\
+      ExecStop            & Command to stop the service                             \\
+      Restart             & Restart policy (e.g., on-failure)                       \\
+      User                & User account to run as                                  \\
+      WorkingDirectory    & Working directory for the process                       \\
+      WantedBy            & Targets this unit hooks into when enabled               \\
+      ListenStream        & TCP/Unix stream socket to listen on                     \\
+      SocketMode          & File mode (permissions) for the socket                  \\
+      OnCalendar          & Cron-like time specification                            \\
+      OnBootSec           & Delay relative to boot                                  \\
+      OnUnitActiveSec     & Delay relative to last activation                       \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Advanced (sometimes needed)}}                      \\
+      Type                & Service startup type (simple, forking, notify, oneshot) \\
+      ExecReload          & Command to reload the service configuration             \\
+      Environment         & Define environment variables for the service            \\
+      EnvironmentFile     & Load environment variables from a file                  \\
+      RemainAfterExit     & Keep service marked active after process exits          \\
+      PIDFile             & Path to PID file for tracking service processes         \\
+      TimeoutStartSec     & Max time to wait for start before failure               \\
+      TimeoutStopSec      & Max time to wait for stop before kill                   \\
+      ConditionPathExists & Only start if a given path exists                       \\
+      Conflicts           & Ensure this unit and another cannot run simultaneously  \\
+      Alias               & Alternative names for this unit when enabled            \\
+      Also                & Enable/disable additional units together                \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Commonly used directives}
+\end{table}
 
 \begin{definition}{Service Section}{}
   Let $u \in U$ be a systemd unit of type \texttt{.service}.
@@ -337,164 +307,56 @@ the tables below summarize the most common types of each you should know.
 
 \chapter{Relations}
 
-\adjustbox{scale=1.5, center}{
+\begin{table}[ht]
+  \begin{center}
+    \rowcolors{2}{gray!10}{white}
+    \begin{tabular}{lll}
+      \toprule
+      \textbf{Forward}     & \textbf{Reverse}     & \textbf{Where used}          \\
+      \midrule
+      After                & Before               & Unit                         \\
+      Before               & After                & Unit                         \\
+      BindsTo              & BoundBy              & Unit / automatic property    \\
+      Conflicts            & ConflictedBy         & Unit / automatic property    \\
+      Following            & n/a                  & Automatic property (devices) \\
+      PartOf               & ConsistsOf           & Unit / automatic property    \\
+      PropagatesReloadTo   & ReloadPropagatedFrom & Unit                         \\
+      PropagatesStopTo     & StopPropagatedFrom   & Unit                         \\
+      ReloadPropagatedFrom & PropagatesReloadTo   & Unit                         \\
+      Requires             & RequiredBy           & Unit / Install               \\
+      Requisite            & RequisiteOf          & Unit / automatic property    \\
+      StopPropagatedFrom   & PropagatesStopTo     & Unit                         \\
+      Triggers             & TriggeredBy          & Automatic properties         \\
+      Upholds              & UpheldBy             & Unit / Install               \\
+      Wants                & WantedBy             & Unit / Install               \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Unit Relations and their Inverses}
+\end{table}
+
+\adjustbox{scale=1.0, center}{
   \begin{tikzcd}
     \text{Unit A} \arrow[r, bend left=40, "Wants="] & \text{Unit B} \arrow[l, bend left=40, dashed, "WantedBy="]
   \end{tikzcd}
 }
 
-\begin{enumerate}[label = {(\arabic*)}]
-  \item Wants
-  \item Requires
-  \item Before
-  \item After
-  \item Conflicts
-\end{enumerate}
-
-\begin{definition}{unit states}{}
-  Let $S$ be the set of possible states of a unit:
-  \begin{align*}
-    S = \set{ \mathsf{inactive},\ \mathsf{activating},\ \mathsf{active},\ \mathsf{deactivating},\ \mathsf{failed}}
-  \end{align*}
-  Define a state function
-  \begin{align*}
-    a : U \to S
-  \end{align*}
-  which maps each unit to its current state.
-\end{definition}
-
-\begin{definition}{started predicate}{}
-  Let
-  \begin{align*}
-    \mathsf{started}(u) \iff a(u) \in \set{ \mathsf{activating},\ \mathsf{active},\ \mathsf{deactivating}}
-  \end{align*}
-  This captures units that are in the process of starting, running, or
-  stopping — i.e., **not inactive or failed**.
-\end{definition}
-
-\section{Wants}
-\begin{definition}{wants predicate}{}
-  Given a relation
-  \begin{align*}
-    \text{Wants} \subseteq U \times U
-  \end{align*}
-  we define the systemd behavior as:
-
-  \begin{quote}
-    If $\mathsf{started}(a)$ becomes true, then for each $(a, b) \in
-      \text{Wants}$, systemd attempts $\mathsf{start}(b)$, regardless of
-    whether $\mathsf{start}(b)$ eventually succeeds or fails.
-  \end{quote}
-
-  This defines ``Wants'' as a rule over the state predicate $\mathsf{started}$,
-  rather than an abstract dependency graph.
-
-  A weaker form of Requires: unit is started if any in the list fail.
-\end{definition}
-
-\section{WantedBy}
-\begin{definition}{wantedby predicate}{}
-  Given the same relation
-  \begin{align*}
-    \text{Wants} \subseteq U \times U
-  \end{align*}
-  we define
-  \begin{align*}
-    \text{WantedBy}(b) := \{ a \in U \mid (a, b) \in \text{Wants} \}
-  \end{align*}
-  as the *reverse mapping* of the ``Wants'' relation. In unit files, specifying
-  \texttt{WantedBy=target} means that \texttt{(target, unit)} is added to the
-  ``Wants'' relation.
-
-  This declaration is used to construct the dependency graph at install time,
-  via \texttt{systemctl enable}.
-
-  Mostly used for targets.
-\end{definition}
-
-\section{Requires}
-\begin{definition}{requires predicate}{}
-  list of units this unit depends on which must be started as well.
-\end{definition}
-
-\section{Conflicts}
-\begin{definition}{conflicts predicate}{}
-  list of units this unit depends on which must be started as well.
-\end{definition}
-
-\section{After}
-\begin{definition}{after predicate}{}
-  Given a relation
-  \begin{align*}
-    \text{After} \subseteq U \times U
-  \end{align*}
-  we define the systemd behavior as:
-
-  \begin{quote}
-    If $(a, b) \in \text{After}$, then systemd ensures that if both $a$ and
-    $b$ are scheduled to start, then $\mathsf{start}(b)$ completes
-    (successfully or not) before $\mathsf{start}(a)$ begins.
-  \end{quote}
-
-  This relation governs start-time ordering but imposes no dependency: systemd
-  does not automatically start $b$ when starting $a$.
-
-  Thus, ``After'' is a partial order constraint on the timeline of unit
-  startups, orthogonal to dependency relations like ``Wants''.
-\end{definition}
-
-
-
-
-\chapter{Ordering}
-
-Some of the relations form the dependency graph. Then for any node, we can
-create a closure over the set of dependent nodes. Then from that closure we can
-create a time ordering.
-
-\section{Unit Relations}
-
-% \todo[inline]{Improve the order definitions using predicates over the states}
-\begin{definition}{Topological Order}{}
-  A topological order is a total ordering over a subset of units such that for
-  any
-  \begin{align*}
-    (a, b) \in R \subseteq U \times U,
-  \end{align*}
-  if $a$ must causally precede $b$ (e.g., via \texttt{Wants} or \texttt{Requires}),
-  then $a$ appears before $b$ in the ordering.
-
-  This applies when $R$ forms a directed acyclic graph (DAG), and is used to
-  compute valid execution sequences from dependency relations.
-\end{definition}
-
-\begin{definition}{Time Order}{}
-  A time order is a scheduling constraint over unit startup.
-
-  Given
-  \begin{align*}
-    (a, b) \in R \subseteq U \times U,
-  \end{align*}
-  the relation enforces that if both $a$ and $b$ are scheduled to start, then
-  $\mathsf{start}(a)$ is delayed until $\mathsf{start}(b)$ has finished
-  (successfully or not).
-
-  Time order does not imply dependency; it only constrains relative ordering.
-\end{definition}
-
-\begin{definition}{Lifetime Binding}{}
-  A lifetime binding is a coupling between the runtime lifecycles of units.
-
-  Given
-  \begin{align*}
-    (a, b) \in R \subseteq U \times U,
-  \end{align*}
-  the relation enforces that events in the lifetime of $b$ (e.g., stopping,
-  restarting) propagate to $a$.
-
-  Examples include \texttt{BindsTo} (stop cascades) and \texttt{PartOf}
-  (restart cascades).
-\end{definition}
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      state        & description                                 \\
+      \midrule
+      activating   & Unit is starting, but not yet fully up      \\
+      active       & Unit is fully running or available          \\
+      deactivating & Unit is stopping, but not yet fully down    \\
+      failed       & Unit has stopped with an error condition    \\
+      inactive     & Unit is not running (default/resting state) \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Possible systemd unit states}
+\end{table}
 
 \begin{table}[h]
   \centering
@@ -515,58 +377,84 @@ create a time ordering.
     RequiredBy        &                &               & $\leftarrow$            & Reverse dependency       \\
     \bottomrule
   \end{tabular}
-  \caption{Systemd relations classified by axis with compact notes}
+  \caption{Systemd relations classified by axis}
 \end{table}
 
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      relation      & description                                                              \\
+      \midrule
+      dependency    & Structural: \texttt{Requires=}, \texttt{Wants=}, \texttt{BindsTo=}, etc. \\
+      time ordering & Sequencing: \texttt{Before=}, \texttt{After=}                            \\
+      lifecycle     & Propagation: \texttt{PartOf=}, stop/start tied to another unit           \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Systemd relation types between units}
+\end{table}
 
-Let $U$ be the finite set of all systemd units.
+\begin{table}[h]
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      relation      & logical form                                                            \\
+      \midrule
+      Wants(A,B)    & $A \rightarrow B$ at start; $B$ may fail, $A$ continues                 \\
+      Requires(A,B) & $A \rightarrow B$ at start; $\neg B$ on activation $\Rightarrow \neg A$ \\
+      BindsTo(A,B)  & Requires + $\neg B$ at runtime $\Rightarrow \neg A$                     \\
+      After(A,B)    & $A$ starts only if $B$ has started first ($B \prec A$)                  \\
+      Before(A,B)   & $A$ must start before $B$ ($A \prec B$)                                 \\
+      PartOf(A,B)   & $\text{Stop}(B) \rightarrow \text{Stop}(A)$ (propagation)               \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Systemd relations as predicates and implications}
+\end{table}
 
-We define three fundamental binary relations on $U \times U$:
-
-\begin{align*}
-  \text{Wants}   & \subseteq U \times U &  & \text{(Dependency)}        \\
-  \text{After}   & \subseteq U \times U &  & \text{(Time Ordering)}     \\
-  \text{BindsTo} & \subseteq U \times U &  & \text{(Lifecycle Binding)}
-\end{align*}
-
-\begin{description}
-  \item[Wants:] If $(a, b) \in \text{Wants}$, then starting $a$ causes systemd
-        to attempt to start $b$. No ordering is implied.
-
-  \item[After:] If $(a, b) \in \text{After}$, and both $a$ and $b$ are being
-        started, then systemd delays starting $a$ until after $b$ has finished
-        starting (success or failure).
-
-  \item[BindsTo:] If $(a, b) \in \text{BindsTo}$, then stopping $b$ causes
-        systemd to stop $a$. The lifecycle of $a$ is bound to that of $b$.
-\end{description}
-
+\begin{table}
+  \begin{center}
+    \rowcolors{2}{gray!10}{white}
+    \begin{tabular}{lll}
+      \toprule
+      Phase      & Purpose                                         & Sections used                         \\
+      \midrule
+      Start      & systemd parses unit files and builds the        & \texttt{[Unit]}, \texttt{[Service]},  \\
+                 & dependency graph                                & \texttt{[Socket]}, etc.               \\
+      Enable     & \texttt{systemctl enable/disable} sets symlinks & \texttt{[Install]} only               \\
+                 & for automatic start                             &                                       \\
+      Activation & starting and ordering units, resolving deps     & \texttt{[Unit]} (ordering, deps),     \\
+                 & and moving toward the active state              & type-specific section                 \\
+      Run        & unit in steady state, lifecycle propagation     & runtime behavior (deps, PartOf, etc.) \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Systemd lifecycle phases}
+\end{table}
 
 \chapter{Targets}
 
-\begin{definition}{target}{}
-  \begin{alist}
-    \item unit that lists dependencies on other targets
-  \end{alist}
-\end{definition}
-
-\begin{tabular}{@{}ll@{}}
-  \toprule
-  \textbf{Target}                & \textbf{Purpose}                                                 \\
-  \midrule
-  \texttt{default.target}        & Main entry point after boot (usually symlinks to another target) \\
-  \texttt{multi-user.target}     & Non-graphical system, networking, users, services                \\
-  \texttt{graphical.target}      & Like multi-user + graphical session (e.g. display manager)       \\
-  \texttt{network.target}        & Basic network stack is up (may be too early for apps)            \\
-  \texttt{network-online.target} & Network is fully configured (for apps needing connectivity)      \\
-  \texttt{sysinit.target}        & Early boot initialization (mounts, swap, etc.)                   \\
-  \texttt{basic.target}          & After sysinit; before most services                              \\
-  \texttt{rescue.target}         & Single-user mode with minimal services                           \\
-  \texttt{emergency.target}      & Minimal shell, no services (critical recovery)                   \\
-  \bottomrule
-\end{tabular}
-
-
+\begin{table}
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      \textbf{Target}                & \textbf{Purpose}                                                 \\
+      \midrule
+      \texttt{default.target}        & Main entry point after boot (usually symlinks to another target) \\
+      \texttt{multi-user.target}     & Non-graphical system, networking, users, services                \\
+      \texttt{graphical.target}      & Like multi-user + graphical session (e.g. display manager)       \\
+      \texttt{network.target}        & Basic network stack is up (may be too early for apps)            \\
+      \texttt{network-online.target} & Network is fully configured (for apps needing connectivity)      \\
+      \texttt{sysinit.target}        & Early boot initialization (mounts, swap, etc.)                   \\
+      \texttt{basic.target}          & After sysinit; before most services                              \\
+      \texttt{rescue.target}         & Single-user mode with minimal services                           \\
+      \texttt{emergency.target}      & Minimal shell, no services (critical recovery)                   \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{Commonly encountered targets}
+\end{table}
 
 \begin{table}
   \begin{tabular}{ll}
@@ -663,57 +551,27 @@ The ``wants'' relation
   \caption{The 80/20 systemd man pages: enough to master unit configuration and runtime control.}
 \end{table}
 
+
+
 \begin{table}
   \begin{center}
-    \rowcolors{2}{gray!10}{white}
     \begin{tabular}{lll}
       \toprule
-      Phase            & Purpose                                & Sections used                        \\
+      Source              & Location / Example                              & Precedence                    \\
       \midrule
-      Parse / Load     & systemd reads unit definitions, builds & \texttt{[Unit]}, \texttt{[Service]}, \\
-                       & dependency graph                       & \texttt{[Socket]}, etc.              \\
-      Enable / Disable & \texttt{systemctl enable/disable} sets & \texttt{[Install]} only              \\
-                       & up symlinks for automatic start        &                                      \\
-      Activation       & starting, stopping, ordering units at  & \texttt{[Unit]} (ordering, deps),    \\
-                       & runtime                                & type-specific section                \\
+      Vendor unit         & /usr/lib/systemd/system/foo.service             & Lowest                        \\
+      System override     & /etc/systemd/system/foo.service                 & Replaces vendor file entirely \\
+      Drop-in (vendor)    & /usr/lib/systemd/system/foo.service.d/*.conf    & Applied on top of base        \\
+      Drop-in (system)    & /etc/systemd/system/foo.service.d/*.conf        & Higher than vendor drop-ins   \\
+      Drop-in (user edit) & systemctl edit foo.service →                    & Highest; merged last          \\
+                          & /etc/systemd/system/foo.service.d/override.conf &                               \\
       \bottomrule
     \end{tabular}
   \end{center}
+  \caption{Common filesystem location for unit files}
 \end{table}
 
-\begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Source              & Location / Example                              & Precedence                    \\
-    \midrule
-    Vendor unit         & /usr/lib/systemd/system/foo.service             & Lowest                        \\
-    System override     & /etc/systemd/system/foo.service                 & Replaces vendor file entirely \\
-    Drop-in (vendor)    & /usr/lib/systemd/system/foo.service.d/*.conf    & Applied on top of base        \\
-    Drop-in (system)    & /etc/systemd/system/foo.service.d/*.conf        & Higher than vendor drop-ins   \\
-    Drop-in (user edit) & systemctl edit foo.service →                    & Highest; merged last          \\
-                        & /etc/systemd/system/foo.service.d/override.conf &                               \\
-    \bottomrule
-  \end{tabular}
-\end{center}
-
 \chapter{Systemctl}
-
-\begin{center}
-  \begin{tabular}{ll}
-    \toprule
-    Category      & Key Commands                                                                                                          \\
-    \midrule
-    Unit          & \texttt{list-units}, \texttt{status}, \texttt{show}, \texttt{start}, \texttt{stop}, \texttt{restart}, \texttt{reload} \\
-    Unit File     & \texttt{list-unit-files}, \texttt{enable}, \texttt{disable}, \texttt{mask}, \texttt{unmask}, \texttt{edit}            \\
-    Machine       & \texttt{list-machines}, \texttt{show-machine}                                                                         \\
-    Job           & \texttt{list-jobs}, \texttt{cancel}                                                                                   \\
-    Environment   & \texttt{show-environment}, \texttt{set-environment}, \texttt{unset-environment}                                       \\
-    Manager State & \texttt{daemon-reexec}, \texttt{daemon-reload}, \texttt{is-system-running}                                            \\
-    System        & \texttt{poweroff}, \texttt{reboot}, \texttt{suspend}, \texttt{hibernate}, \texttt{halt}                               \\
-    \bottomrule
-  \end{tabular}
-\end{center}
-
 
 \begin{longtable}{lll}
   \toprule
@@ -810,7 +668,59 @@ The ``wants'' relation
                 & set-property           & Change unit properties at runtime       \\
                 & add-wants              & Add Wants= edge to a unit               \\
                 & add-requires           & Add Requires= edge to a unit            \\
+  \caption{systemctl subcommands}
 \end{longtable}
+
+\chapter{systemd-analyze}
+
+\begin{table}
+
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      \textbf{Subcommand}     & \textbf{Description}                             \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Boot performance \& dependencies}}              \\
+      blame                   & Show services ordered by startup time            \\
+      critical-chain [UNIT]   & Show dependency chain for a unit                 \\
+      dot [PATTERN]           & Generate dependency graph (DOT)                  \\
+      plot                    & Generate boot chart (SVG)                        \\
+      time                    & Show time spent in kernel, initrd, and userspace \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Units \& configuration}}                        \\
+      cat-config NAME|PATH    & Show parsed config                               \\
+      dump [PATTERN]          & Dump state of manager                            \\
+      unit-files              & List installed unit files                        \\
+      unit-paths              & Show search paths for units                      \\
+      verify FILE             & Check unit file correctness                      \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Expressions \& time utilities}}                 \\
+      calendar SPEC           & Explain calendar expression                      \\
+      compare-versions        & Compare two version strings                      \\
+      timespan SPAN           & Normalize timespan                               \\
+      timestamp TIMESTAMP     & Normalize timestamp                              \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Security \& system info}}                       \\
+      capability [CAPABILITY] & Show capability info                             \\
+      fdstore UNIT            & Show/store file descriptors                      \\
+      filesystems [SET]       & List supported filesystems                       \\
+      image-policy POLICY     & Show container image policy                      \\
+      inspect-elf FILE        & Inspect ELF binary metadata                      \\
+      malloc [SERVICE]        & Show malloc debug info over DBus                 \\
+      security [UNIT]         & Security analysis of unit                        \\
+      syscall-filter [SET]    & List syscall filter sets                         \\
+      \midrule
+      \multicolumn{2}{l}{\textbf{Hardware / platform details}}                   \\
+      architectures [NAME]    & Show supported architectures                     \\
+      has-tpm2                & Check for TPM2 support                           \\
+      pcrs [PCR...]           & Show TPM2 PCR values                             \\
+      smbios11                & Show SMBIOS 1.1 information                      \\
+      srk                     & Show TPM2 SRK                                    \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \caption{systemd-analyze subcommands}
+\end{table}
 
 \glsaddallunused{}
 

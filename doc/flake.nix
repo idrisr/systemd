@@ -7,10 +7,15 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-    in {
+    in
+    {
       devShells.${system}.default = pkgs.mkShell {
         name = "latex-shell";
-        packages = [ pkgs.texliveFull pkgs.python312Packages.pygments ];
+        packages = [
+          pkgs.texliveFull
+          pkgs.python312Packages.pygments
+          pkgs.graphviz
+        ];
         shellHook = ''
           export LATEXINDENT_CONFIG=indentconfig.yaml
         '';
